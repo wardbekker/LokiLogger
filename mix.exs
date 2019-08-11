@@ -7,7 +7,11 @@ defmodule LokiLogger.MixProject do
       version: "0.1.0",
       elixir: "~> 1.8",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      description: description(),
+      package: package(),
+      name: "Loki Logger",
+      source_url: "https://github.com/wardbekker/LokiLogger.git"
     ]
   end
 
@@ -22,7 +26,24 @@ defmodule LokiLogger.MixProject do
   defp deps do
     [
       {:httpoison, "~> 1.5"},
-      {:json, "~> 1.3"}
+      {:json, "~> 1.3"},
+      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:benchee, "~> 1.0", only: :test}
     ]
   end
+
+  defp description() do
+    "Elixir Logger Backend for Grafana Loki"
+  end
+
+  defp package() do
+    [
+      name: "loki_logger",
+      # These are the default files included in the package
+      files: ~w(lib .formatter.exs mix.exs README* LICENSE*),
+      licenses: ["Apache-2.0"],
+      links: %{"GitHub" => "https://github.com/wardbekker/LokiLogger.git"}
+    ]
+  end
+
 end

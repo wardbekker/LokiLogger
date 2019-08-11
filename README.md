@@ -2,6 +2,11 @@
 
 LokiLogger is an Elixir logger backend providing support for Logging to [Grafana Loki](https://github.com/grafana/loki)
 
+## Known issues
+
+* "works-on-my-machine" level of quality
+* not thread safe yet
+
 ## Installation
 
 The package can be installed by adding `loki_logger` to your list of dependencies in `mix.exs`:

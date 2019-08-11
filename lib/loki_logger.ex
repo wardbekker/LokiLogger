@@ -118,8 +118,8 @@ defmodule LokiLogger do
   end
 
   defp async_io(loki_host, loki_labels, output)  do
-
-    labels = loki_labels |> Enum.map(fn {k,v} -> "\"#{k}\"=\"#{v}\"" end)
+    labels = Enum.map(loki_labels, fn {k, v} -> "#{k}=\"#{v}\"" end)
+             |> Enum.join(",")
     labels = "{" <> labels <> "}"
 
     msg = %{
@@ -135,27 +135,27 @@ defmodule LokiLogger do
       msg
     )
 
-    Task.start(
-      fn ->
-        # TODO: replace with proper async http?
-        case HTTPoison.post "#{loki_host}/api/prom/push", json,
-                            [{"Content-Type", "application/json"}] do
-          {:ok, %HTTPoison.Response{status_code: 204}} ->
-            #expected
-            :noop
-          {:ok, %HTTPoison.Response{status_code: status_code}} ->
-            raise "unexpected status code from loki backend #{status_code}"
-          {:error, %HTTPoison.Error{reason: reason}} ->
-            raise "http error from loki backend " <> Exception.format_exit(reason)
-        end
-      end
-    )
+    # TODO: replace with async http call
+    case HTTPoison.post "#{loki_host}/api/prom/push", json,
+                        [{"Content-Type", "application/json"}] do
+      {:ok, %HTTPoison.Response{status_code: 204}} ->
+        #expected
+        :noop
+      {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
+        raise "unexpected status code from loki backend #{status_code}" <> Exception.format_exit(body)
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        raise "http error from loki backend " <> Exception.format_exit(reason)
+    end
+
   end
 
   defp format_event(level, msg, ts, md, state) do
     %{format: format, metadata: keys} = state
 
-    %{ts: iso8601_timestamp(ts), line: List.to_string(Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys)))}
+    %{
+      ts: iso8601_timestamp(ts),
+      line: List.to_string(Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys)))
+    }
   end
 
   defp take_metadata(metadata, :all) do
@@ -177,7 +177,7 @@ defmodule LokiLogger do
 
   defp log_buffer(%{buffer_size: 0, buffer: []} = state), do: state
 
-  defp log_buffer(%{loki_host: loki_host, loki_labels: loki_labels, buffer: buffer}  = state) do
+  defp log_buffer(%{loki_host: loki_host, loki_labels: loki_labels, buffer: buffer} = state) do
     async_io(loki_host, loki_labels, buffer)
     %{state | buffer: [], buffer_size: 0}
   end
@@ -186,10 +186,12 @@ defmodule LokiLogger do
     log_buffer(state)
   end
 
-  defp iso8601_timestamp({{year,month,date},{hour,minute,second,micro}}) do
+  defp iso8601_timestamp({{year, month, date}, {hour, minute, second, micro}}) do
     hour = hour - 2 #ugly hack
-    :io_lib.format("~4..0B-~2..0B-~2..0BT~2..0B:~2..0B:~2..0B.~3..0BZ",
-      [year, month, date, hour, minute, second, micro])
+    :io_lib.format(
+      "~4..0B-~2..0B-~2..0BT~2..0B:~2..0B:~2..0B.~3..0BZ",
+      [year, month, date, hour, minute, second, micro]
+    )
     |> to_string
   end
 end
