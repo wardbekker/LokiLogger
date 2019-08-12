@@ -13,6 +13,7 @@ defmodule LokiLoggerTest do
     Logger.info("Sample message")
     Logger.debug("Sample message")
     Logger.error("Sample message")
+    Logger.flush()
   end
 
   test "benchmark" do
@@ -20,9 +21,8 @@ defmodule LokiLoggerTest do
       %{
         "debug" => fn -> Logger.debug("Sample message") end,
       },
-      time: 10,
-      memory_time: 2,
-      parallel: 1
+      time: 4,
+      parallel: 2
     )
   end
 end

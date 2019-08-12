@@ -28,7 +28,8 @@ defmodule LokiLogger.MixProject do
       {:httpoison, "~> 1.5"},
       {:json, "~> 1.3"},
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:benchee, "~> 1.0", only: :test}
+      {:benchee, "~> 1.0", only: :test},
+      {:timex, "~> 3.5"}
     ]
   end
 

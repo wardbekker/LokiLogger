@@ -8,5 +8,5 @@ config :logger, :loki_logger,
        format: "$metadata level=$level $levelpad$message",
        metadata: :all,
        max_buffer: 300,
-       loki_labels: %{application: "loki_logger_library"},
+       loki_labels: %{application: "loki_logger_library", elixir_node: node()},
        loki_host: "http://localhost:3100"

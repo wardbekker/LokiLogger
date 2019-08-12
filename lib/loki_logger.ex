@@ -113,20 +113,25 @@ defmodule LokiLogger do
 
   defp buffer_event(level, msg, ts, md, state) do
     %{buffer: buffer, buffer_size: buffer_size} = state
-    buffer = buffer ++ [format_event(level, msg, ts, md, state)]
+    epoch_nano = DateTime.to_unix(Timex.to_datetime(ts), :nanosecond)
+    buffer = buffer ++ [{epoch_nano, format_event(level, msg, ts, md, state)}]
     %{state | buffer: buffer, buffer_size: buffer_size + 1}
   end
 
   defp async_io(loki_host, loki_labels, output)  do
+    # TODO: include erlang node in labels
     labels = Enum.map(loki_labels, fn {k, v} -> "#{k}=\"#{v}\"" end)
              |> Enum.join(",")
     labels = "{" <> labels <> "}"
+
+    # sort entries on epoch seconds as first element of tuple, to prevent out-of-order entries
+    sorted_entries = output |> List.keysort(0) |> Enum.map(fn {_ts, msg} -> msg end)
 
     msg = %{
       streams: [
         %{
           labels: labels,
-          entries: output
+          entries: sorted_entries
         }
       ]
     }
@@ -142,6 +147,8 @@ defmodule LokiLogger do
         #expected
         :noop
       {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
+        IO.puts inspect(output |> List.keysort(1) |> Enum.reverse, pretty: true)
+
         raise "unexpected status code from loki backend #{status_code}" <> Exception.format_exit(body)
       {:error, %HTTPoison.Error{reason: reason}} ->
         raise "http error from loki backend " <> Exception.format_exit(reason)
@@ -186,13 +193,9 @@ defmodule LokiLogger do
     log_buffer(state)
   end
 
-  defp iso8601_timestamp({{year, month, date}, {hour, minute, second, micro}}) do
-    hour = hour - 2 #ugly hack
-    :io_lib.format(
-      "~4..0B-~2..0B-~2..0BT~2..0B:~2..0B:~2..0B.~3..0BZ",
-      [year, month, date, hour, minute, second, micro]
-    )
-    |> to_string
+  defp iso8601_timestamp(ts) do
+    {:ok, res} = Timex.to_datetime(ts, Timex.Timezone.Local.lookup()) |> Timex.format("{ISO:Extended:Z}")
+    res
   end
 end
 
