@@ -1,8 +1,6 @@
 defmodule LokiLogger do
   @behaviour :gen_event
-  # https://github.com/elixir-lang/elixir/blob/master/lib/logger/lib/logger/backends/console.ex
 
-  # TODO: determine if all fields are needed
   defstruct buffer: [],
             buffer_size: 0,
             format: nil,
@@ -119,7 +117,6 @@ defmodule LokiLogger do
   end
 
   defp async_io(loki_host, loki_labels, output)  do
-    # TODO: include erlang node in labels
     labels = Enum.map(loki_labels, fn {k, v} -> "#{k}=\"#{v}\"" end)
              |> Enum.join(",")
     labels = "{" <> labels <> "}"

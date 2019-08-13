@@ -6,6 +6,13 @@ LokiLogger is an Elixir logger backend providing support for Logging to [Grafana
 
 * "works-on-my-machine" level of quality. Love to get your feedback in the repo's Github issues
 
+## TODO
+
+* async http call to backend.
+* snappy compressed proto format in the HTTP Body instead of JSON. 
+* proper unit tests.
+* http post retry strategy on loki backend failure.
+
 ## Installation
 
 The package can be installed by adding `loki_logger` to your list of dependencies in `mix.exs`:
@@ -26,7 +33,7 @@ Loki Logger's behavior is controlled using the application configuration environ
 
 * __loki_host__ : the hostname of the syslog server e.g. http://localhost:3100
 * __loki_labels__ : the Loki log labels used to select the log stream in e.g. Grafana 
-* __level__: logging threshold. Messages "above" this threshold (in syslog parlance) will be discarded. Acceptable values are debug, info, notice, warn, err, crit, alert, and emerg.
+* __level__: logging threshold. Messages "above" this threshold will be discarded. The supported levels, ordered by precedence are :debug, :info, :warn, :error.
 * __format__: the format message used to print logs. Defaults to: "$metadata level=$level $levelpad$message". It may also be a {module, function} tuple that is invoked with the log level, the message, the current timestamp and the metadata.
 * __metadata__: the metadata to be printed by $metadata. Defaults to to :all, which prints all metadata.
 * __max_buffer__: the amount of entries to buffer before posting to the Loki REST api. Defaults to 32.  
