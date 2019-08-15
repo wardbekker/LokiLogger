@@ -12,4 +12,3 @@ config :logger, :loki_logger,
        loki_host: "http://localhost:3100"
 
 config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
- 
