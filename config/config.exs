@@ -10,3 +10,6 @@ config :logger, :loki_logger,
        max_buffer: 300,
        loki_labels: %{application: "loki_logger_library", elixir_node: node()},
        loki_host: "http://localhost:3100"
+
+config :elixir, :time_zone_database, Tzdata.TimeZoneDatabase
+ 
