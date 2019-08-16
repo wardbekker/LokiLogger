@@ -4,7 +4,7 @@ defmodule LokiLogger.MixProject do
   def project do
     [
       app: :loki_logger,
-      version: "0.2.0",
+      version: "0.3.0",
       elixir: "~> 1.8",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -30,7 +30,10 @@ defmodule LokiLogger.MixProject do
       {:json, "~> 1.3"},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:benchee, "~> 1.0", only: :test},
-      {:timex, "~> 3.5"}
+      {:timex, "~> 3.5"},
+      {:protobuf, "~> 0.5.3"},
+      {:google_protos, "~> 0.1"},
+      {:snappyer, "~> 1.2"}
     ]
   end
 

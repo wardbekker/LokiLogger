@@ -12,7 +12,7 @@ defmodule LokiLoggerTest do
     Logger.error("Sample message")
     Logger.info("Sample message")
     Logger.debug("Sample message")
-    Logger.error("Sample message")
+    Logger.warn("Sample message")
     Logger.flush()
   end
 

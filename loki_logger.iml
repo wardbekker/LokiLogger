@@ -12,6 +12,7 @@
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/earmark" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/ex_doc" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/gettext" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/google_protos" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/hackney" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/httpoison" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/idna" />
@@ -22,6 +23,8 @@
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/mimerl" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/nimble_parsec" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/parse_trans" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/protobuf" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/snappyer" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/ssl_verify_fun" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/timex" />
       <excludeFolder url="file://$MODULE_DIR$/_build/dev/lib/tzdata" />
@@ -31,6 +34,7 @@
       <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/combine" />
       <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/deep_merge" />
       <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/gettext" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/google_protos" />
       <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/hackney" />
       <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/httpoison" />
       <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/idna" />
@@ -38,6 +42,8 @@
       <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/metrics" />
       <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/mimerl" />
       <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/parse_trans" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/protobuf" />
+      <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/snappyer" />
       <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/ssl_verify_fun" />
       <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/timex" />
       <excludeFolder url="file://$MODULE_DIR$/_build/test/lib/tzdata" />
@@ -83,5 +89,10 @@
     <orderEntry type="library" name="combine" level="project" />
     <orderEntry type="library" name="gettext" level="project" />
     <orderEntry type="library" name="benchfella" level="project" />
+    <orderEntry type="library" name="protobuf" level="project" />
+    <orderEntry type="library" name="google_protos" level="project" />
+    <orderEntry type="library" name="eqc_ex" level="project" />
+    <orderEntry type="library" name="Bundled Protobuf Distribution" level="application" />
+    <orderEntry type="library" name="snappyer" level="project" />
   </component>
 </module>
