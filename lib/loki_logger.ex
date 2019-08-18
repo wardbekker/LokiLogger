@@ -1,5 +1,6 @@
 defmodule LokiLogger do
   @behaviour :gen_event
+  @moduledoc false
 
   defstruct buffer: [],
             buffer_size: 0,
@@ -120,10 +121,34 @@ defmodule LokiLogger do
   end
 
   defp async_io(loki_host, loki_labels, loki_scope_org_id, output)  do
+    bin_push_request = generate_bin_push_request(loki_labels, output)
+
+    http_headers = [{"Content-Type", "application/x-protobuf"}, {"X-Scope-OrgID", loki_scope_org_id}]
+
+    # TODO: replace with async http call
+    case HTTPoison.post "#{loki_host}/api/prom/push", bin_push_request,
+                        http_headers do
+      {:ok, %HTTPoison.Response{status_code: 204}} ->
+        #expected
+        :noop
+      {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
+        IO.puts inspect(
+                  output
+                  |> List.keysort(1)
+                  |> Enum.reverse,
+                  pretty: true
+                )
+
+        raise "unexpected status code from loki backend #{status_code}" <> Exception.format_exit(body)
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        raise "http error from loki backend " <> Exception.format_exit(reason)
+    end
+  end
+
+  defp generate_bin_push_request(loki_labels, output) do
     labels = Enum.map(loki_labels, fn {k, v} -> "#{k}=\"#{v}\"" end)
              |> Enum.join(",")
     labels = "{" <> labels <> "}"
-
     # sort entries on epoch seconds as first element of tuple, to prevent out-of-order entries
     sorted_entries = output
                      |> List.keysort(0)
@@ -150,32 +175,10 @@ defmodule LokiLogger do
     {:ok, bin_push_request} = Logproto.PushRequest.encode(request)
                               |> :snappyer.compress
 
-    http_headers = [{"Content-Type", "application/x-protobuf"}, {"X-Scope-OrgID", loki_scope_org_id}]
-
-    # TODO: replace with async http call
-    case HTTPoison.post "#{loki_host}/api/prom/push", bin_push_request,
-                        http_headers do
-      {:ok, %HTTPoison.Response{status_code: 204}} ->
-        #expected
-        :noop
-      {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
-        IO.puts inspect(
-                  output
-                  |> List.keysort(1)
-                  |> Enum.reverse,
-                  pretty: true
-                )
-
-        raise "unexpected status code from loki backend #{status_code}" <> Exception.format_exit(body)
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        raise "http error from loki backend " <> Exception.format_exit(reason)
-    end
-
+    bin_push_request
   end
 
-  defp format_event(level, msg, ts, md, state) do
-    %{format: format, metadata: keys} = state
-
+  defp format_event(level, msg, ts, md, %{format: format, metadata: keys}  = _state) do
     List.to_string(Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys)))
   end
 

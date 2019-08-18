@@ -12,7 +12,7 @@ LokiLogger is an Elixir logger backend providing support for Logging to [Grafana
 
 * [x] Elixir Logger formatting
 * [x] Elixir Logger metadata
-* [x] Loki Scope-Org-Id header for multi-tenancy
+    * [x] Loki Scope-Org-Id header for multi-tenancy
 * [x] Timezone aware
 * [X] Snappy compressed proto format in the HTTP Body  
 * [ ] Async http call to backend.
