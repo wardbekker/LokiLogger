@@ -50,5 +50,4 @@ defmodule LokiLogger.MixProject do
       links: %{"GitHub" => "https://github.com/wardbekker/LokiLogger.git"}
     ]
   end
-
 end
