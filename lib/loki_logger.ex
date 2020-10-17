@@ -118,11 +118,18 @@ defmodule LokiLogger do
     )
   end
 
-  defp buffer_event(level, msg, ts, md, state) do
+  defp buffer_event(level, msg, ts = {date, {hour, minute, second, milli}}, md, state) do
     %{buffer: buffer, buffer_size: buffer_size} = state
 
     epoch_nano =
-      DateTime.to_unix(Timex.to_datetime(ts, Timex.Timezone.Local.lookup()), :nanosecond)
+      :calendar.local_time_to_universal_time_dst({date, {hour, minute, second}})
+      |> case do
+        [] -> {date, {hour, minute, second}}
+        [dt_utc] -> dt_utc
+        [_, dt_utc] -> dt_utc
+      end
+      |> NaiveDateTime.from_erl!({round(milli * 1000), 6})
+      |> NaiveDateTime.diff(~N[1970-01-01 00:00:00], :nanosecond)
 
     buffer = buffer ++ [{epoch_nano, format_event(level, msg, ts, md, state)}]
     %{state | buffer: buffer, buffer_size: buffer_size + 1}
