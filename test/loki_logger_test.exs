@@ -19,7 +19,7 @@ defmodule LokiLoggerTest do
   test "benchmark" do
     Benchee.run(
       %{
-        "debug" => fn -> Logger.debug("Sample message") end,
+        "debug" => fn -> Logger.debug("Sample message") end
       },
       time: 4,
       parallel: 2

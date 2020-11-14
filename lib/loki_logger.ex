@@ -62,7 +62,6 @@ defmodule LokiLogger do
     :ok
   end
 
-
   ## Helpers
 
   defp meet_level?(_lvl, nil), do: true
@@ -79,9 +78,16 @@ defmodule LokiLogger do
 
   defp init(config, state) do
     level = Keyword.get(config, :level, :info)
-    format = Logger.Formatter.compile(Keyword.get(config, :format, "$metadata level=$level $levelpad$message"))
-    metadata = Keyword.get(config, :metadata, :all)
-               |> configure_metadata()
+
+    format =
+      Logger.Formatter.compile(
+        Keyword.get(config, :format, "$metadata level=$level $levelpad$message")
+      )
+
+    metadata =
+      Keyword.get(config, :metadata, :all)
+      |> configure_metadata()
+
     max_buffer = Keyword.get(config, :max_buffer, 32)
     loki_labels = Keyword.get(config, :loki_labels, %{application: "loki_logger_library"})
     loki_host = Keyword.get(config, :loki_host, "http://localhost:3100")
@@ -89,14 +95,13 @@ defmodule LokiLogger do
 
     %{
       state
-    |
-      format: format,
-      metadata: metadata,
-      level: level,
-      max_buffer: max_buffer,
-      loki_labels: loki_labels,
-      loki_host: loki_host,
-      loki_scope_org_id: loki_scope_org_id
+      | format: format,
+        metadata: metadata,
+        level: level,
+        max_buffer: max_buffer,
+        loki_labels: loki_labels,
+        loki_host: loki_host,
+        loki_scope_org_id: loki_scope_org_id
     }
   end
 
@@ -113,72 +118,93 @@ defmodule LokiLogger do
     )
   end
 
-  defp buffer_event(level, msg, ts, md, state) do
+  defp buffer_event(level, msg, ts = {date, {hour, minute, second, milli}}, md, state) do
     %{buffer: buffer, buffer_size: buffer_size} = state
-    epoch_nano = DateTime.to_unix(Timex.to_datetime(ts, Timex.Timezone.Local.lookup()), :nanosecond)
+
+    epoch_nano =
+      :calendar.local_time_to_universal_time_dst({date, {hour, minute, second}})
+      |> case do
+        [] -> {date, {hour, minute, second}}
+        [dt_utc] -> dt_utc
+        [_, dt_utc] -> dt_utc
+      end
+      |> NaiveDateTime.from_erl!({round(milli * 1000), 6})
+      |> NaiveDateTime.diff(~N[1970-01-01 00:00:00], :nanosecond)
+
     buffer = buffer ++ [{epoch_nano, format_event(level, msg, ts, md, state)}]
     %{state | buffer: buffer, buffer_size: buffer_size + 1}
   end
 
-  defp async_io(loki_host, loki_labels, loki_scope_org_id, output)  do
+  defp async_io(loki_host, loki_labels, loki_scope_org_id, output) do
     bin_push_request = generate_bin_push_request(loki_labels, output)
 
-    http_headers = [{"Content-Type", "application/x-protobuf"}, {"X-Scope-OrgID", loki_scope_org_id}]
+    http_headers = [
+      {"Content-Type", "application/x-protobuf"},
+      {"X-Scope-OrgID", loki_scope_org_id}
+    ]
 
     # TODO: replace with async http call
-    case HTTPoison.post "#{loki_host}/api/prom/push", bin_push_request,
-                        http_headers do
+    case HTTPoison.post("#{loki_host}/api/prom/push", bin_push_request, http_headers) do
       {:ok, %HTTPoison.Response{status_code: 204}} ->
-        #expected
+        # expected
         :noop
-      {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
-        IO.puts inspect(
-                  output
-                  |> List.keysort(1)
-                  |> Enum.reverse,
-                  pretty: true
-                )
 
-        raise "unexpected status code from loki backend #{status_code}" <> Exception.format_exit(body)
+      {:ok, %HTTPoison.Response{status_code: status_code, body: body}} ->
+        IO.puts(
+          inspect(
+            output
+            |> List.keysort(1)
+            |> Enum.reverse(),
+            pretty: true
+          )
+        )
+
+        raise "unexpected status code from loki backend #{status_code}" <>
+                Exception.format_exit(body)
+
       {:error, %HTTPoison.Error{reason: reason}} ->
         raise "http error from loki backend " <> Exception.format_exit(reason)
     end
   end
 
   defp generate_bin_push_request(loki_labels, output) do
-    labels = Enum.map(loki_labels, fn {k, v} -> "#{k}=\"#{v}\"" end)
-             |> Enum.join(",")
+    labels =
+      Enum.map(loki_labels, fn {k, v} -> "#{k}=\"#{v}\"" end)
+      |> Enum.join(",")
+
     labels = "{" <> labels <> "}"
     # sort entries on epoch seconds as first element of tuple, to prevent out-of-order entries
-    sorted_entries = output
-                     |> List.keysort(0)
-                     |> Enum.map(
-                          fn {ts, line} ->
-                            seconds = Kernel.trunc(ts / 1_000_000_000)
-                            nanos = ts - (seconds * 1_000_000_000)
-                            Logproto.Entry.new(
-                              timestamp: Google.Protobuf.Timestamp.new(seconds: seconds, nanos: nanos),
-                              line: line
-                            )
-                          end
-                        )
+    sorted_entries =
+      output
+      |> List.keysort(0)
+      |> Enum.map(fn {ts, line} ->
+        seconds = Kernel.trunc(ts / 1_000_000_000)
+        nanos = ts - seconds * 1_000_000_000
 
-    request = Logproto.PushRequest.new(
-      streams: [
-        Logproto.Stream.new(
-          labels: labels,
-          entries: sorted_entries
+        Logproto.Entry.new(
+          timestamp: Google.Protobuf.Timestamp.new(seconds: seconds, nanos: nanos),
+          line: line
         )
-      ]
-    )
+      end)
 
-    {:ok, bin_push_request} = Logproto.PushRequest.encode(request)
-                              |> :snappyer.compress
+    request =
+      Logproto.PushRequest.new(
+        streams: [
+          Logproto.Stream.new(
+            labels: labels,
+            entries: sorted_entries
+          )
+        ]
+      )
+
+    {:ok, bin_push_request} =
+      Logproto.PushRequest.encode(request)
+      |> :snappyer.compress()
 
     bin_push_request
   end
 
-  defp format_event(level, msg, ts, md, %{format: format, metadata: keys}  = _state) do
+  defp format_event(level, msg, ts, md, %{format: format, metadata: keys} = _state) do
     List.to_string(Logger.Formatter.format(format, level, msg, ts, take_metadata(md, keys)))
   end
 
@@ -202,7 +228,12 @@ defmodule LokiLogger do
   defp log_buffer(%{buffer_size: 0, buffer: []} = state), do: state
 
   defp log_buffer(
-         %{loki_host: loki_host, loki_labels: loki_labels, loki_scope_org_id: loki_scope_org_id, buffer: buffer} = state
+         %{
+           loki_host: loki_host,
+           loki_labels: loki_labels,
+           loki_scope_org_id: loki_scope_org_id,
+           buffer: buffer
+         } = state
        ) do
     async_io(loki_host, loki_labels, loki_scope_org_id, buffer)
     %{state | buffer: [], buffer_size: 0}
@@ -212,7 +243,3 @@ defmodule LokiLogger do
     log_buffer(state)
   end
 end
-
-
-
-

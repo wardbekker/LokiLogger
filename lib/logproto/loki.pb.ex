@@ -7,7 +7,7 @@ defmodule Logproto.PushRequest do
         }
   defstruct [:streams]
 
-  field :streams, 1, repeated: true, type: Logproto.Stream
+  field(:streams, 1, repeated: true, type: Logproto.Stream)
 end
 
 defmodule Logproto.PushResponse do
@@ -32,12 +32,12 @@ defmodule Logproto.QueryRequest do
         }
   defstruct [:query, :limit, :start, :end, :direction, :regex]
 
-  field :query, 1, type: :string
-  field :limit, 2, type: :uint32
-  field :start, 3, type: Google.Protobuf.Timestamp
-  field :end, 4, type: Google.Protobuf.Timestamp
-  field :direction, 5, type: Logproto.Direction, enum: true
-  field :regex, 6, type: :string
+  field(:query, 1, type: :string)
+  field(:limit, 2, type: :uint32)
+  field(:start, 3, type: Google.Protobuf.Timestamp)
+  field(:end, 4, type: Google.Protobuf.Timestamp)
+  field(:direction, 5, type: Logproto.Direction, enum: true)
+  field(:regex, 6, type: :string)
 end
 
 defmodule Logproto.QueryResponse do
@@ -49,7 +49,7 @@ defmodule Logproto.QueryResponse do
         }
   defstruct [:streams]
 
-  field :streams, 1, repeated: true, type: Logproto.Stream
+  field(:streams, 1, repeated: true, type: Logproto.Stream)
 end
 
 defmodule Logproto.LabelRequest do
@@ -64,10 +64,10 @@ defmodule Logproto.LabelRequest do
         }
   defstruct [:name, :values, :start, :end]
 
-  field :name, 1, type: :string
-  field :values, 2, type: :bool
-  field :start, 3, type: Google.Protobuf.Timestamp
-  field :end, 4, type: Google.Protobuf.Timestamp
+  field(:name, 1, type: :string)
+  field(:values, 2, type: :bool)
+  field(:start, 3, type: Google.Protobuf.Timestamp)
+  field(:end, 4, type: Google.Protobuf.Timestamp)
 end
 
 defmodule Logproto.LabelResponse do
@@ -79,7 +79,7 @@ defmodule Logproto.LabelResponse do
         }
   defstruct [:values]
 
-  field :values, 1, repeated: true, type: :string
+  field(:values, 1, repeated: true, type: :string)
 end
 
 defmodule Logproto.Stream do
@@ -92,8 +92,8 @@ defmodule Logproto.Stream do
         }
   defstruct [:labels, :entries]
 
-  field :labels, 1, type: :string
-  field :entries, 2, repeated: true, type: Logproto.Entry
+  field(:labels, 1, type: :string)
+  field(:entries, 2, repeated: true, type: Logproto.Entry)
 end
 
 defmodule Logproto.Entry do
@@ -106,8 +106,8 @@ defmodule Logproto.Entry do
         }
   defstruct [:timestamp, :line]
 
-  field :timestamp, 1, type: Google.Protobuf.Timestamp
-  field :line, 2, type: :string
+  field(:timestamp, 1, type: Google.Protobuf.Timestamp)
+  field(:line, 2, type: :string)
 end
 
 defmodule Logproto.TailRequest do
@@ -123,11 +123,11 @@ defmodule Logproto.TailRequest do
         }
   defstruct [:query, :regex, :delayFor, :limit, :start]
 
-  field :query, 1, type: :string
-  field :regex, 2, type: :string
-  field :delayFor, 3, type: :uint32
-  field :limit, 4, type: :uint32
-  field :start, 5, type: Google.Protobuf.Timestamp
+  field(:query, 1, type: :string)
+  field(:regex, 2, type: :string)
+  field(:delayFor, 3, type: :uint32)
+  field(:limit, 4, type: :uint32)
+  field(:start, 5, type: Google.Protobuf.Timestamp)
 end
 
 defmodule Logproto.TailResponse do
@@ -140,8 +140,8 @@ defmodule Logproto.TailResponse do
         }
   defstruct [:stream, :droppedStreams]
 
-  field :stream, 1, type: Logproto.Stream
-  field :droppedStreams, 2, repeated: true, type: Logproto.DroppedStream
+  field(:stream, 1, type: Logproto.Stream)
+  field(:droppedStreams, 2, repeated: true, type: Logproto.DroppedStream)
 end
 
 defmodule Logproto.DroppedStream do
@@ -155,9 +155,9 @@ defmodule Logproto.DroppedStream do
         }
   defstruct [:from, :to, :labels]
 
-  field :from, 1, type: Google.Protobuf.Timestamp
-  field :to, 2, type: Google.Protobuf.Timestamp
-  field :labels, 3, type: :string
+  field(:from, 1, type: Google.Protobuf.Timestamp)
+  field(:to, 2, type: Google.Protobuf.Timestamp)
+  field(:labels, 3, type: :string)
 end
 
 defmodule Logproto.TimeSeriesChunk do
@@ -172,10 +172,10 @@ defmodule Logproto.TimeSeriesChunk do
         }
   defstruct [:from_ingester_id, :user_id, :labels, :chunks]
 
-  field :from_ingester_id, 1, type: :string
-  field :user_id, 2, type: :string
-  field :labels, 3, repeated: true, type: Logproto.LabelPair
-  field :chunks, 4, repeated: true, type: Logproto.Chunk
+  field(:from_ingester_id, 1, type: :string)
+  field(:user_id, 2, type: :string)
+  field(:labels, 3, repeated: true, type: Logproto.LabelPair)
+  field(:chunks, 4, repeated: true, type: Logproto.Chunk)
 end
 
 defmodule Logproto.LabelPair do
@@ -188,8 +188,8 @@ defmodule Logproto.LabelPair do
         }
   defstruct [:name, :value]
 
-  field :name, 1, type: :string
-  field :value, 2, type: :string
+  field(:name, 1, type: :string)
+  field(:value, 2, type: :string)
 end
 
 defmodule Logproto.Chunk do
@@ -201,7 +201,7 @@ defmodule Logproto.Chunk do
         }
   defstruct [:data]
 
-  field :data, 1, type: :bytes
+  field(:data, 1, type: :bytes)
 end
 
 defmodule Logproto.TransferChunksResponse do
@@ -216,6 +216,6 @@ defmodule Logproto.Direction do
   @moduledoc false
   use Protobuf, enum: true, syntax: :proto3
 
-  field :FORWARD, 0
-  field :BACKWARD, 1
+  field(:FORWARD, 0)
+  field(:BACKWARD, 1)
 end
