@@ -2,6 +2,7 @@ defmodule LokiLogger do
   @behaviour :gen_event
   @moduledoc false
 
+  @derive {Inspect, except: [:basic_auth_user, :basic_auth_password]}
   defstruct buffer: [],
             buffer_size: 0,
             format: nil,
@@ -10,7 +11,9 @@ defmodule LokiLogger do
             metadata: nil,
             loki_labels: nil,
             loki_host: nil,
-            loki_scope_org_id: nil
+            loki_scope_org_id: nil,
+            basic_auth_user: nil,
+            basic_auth_password: nil
 
   def init(LokiLogger) do
     config = Application.get_env(:logger, :loki_logger)
@@ -93,6 +96,9 @@ defmodule LokiLogger do
     loki_host = Keyword.get(config, :loki_host, "http://localhost:3100")
     loki_scope_org_id = Keyword.get(config, :loki_scope_org_id, "fake")
 
+    basic_auth_user = Keyword.get(config, :basic_auth_user)
+    basic_auth_password = Keyword.get(config, :basic_auth_password)
+
     %{
       state
       | format: format,
@@ -101,7 +107,9 @@ defmodule LokiLogger do
         max_buffer: max_buffer,
         loki_labels: loki_labels,
         loki_host: loki_host,
-        loki_scope_org_id: loki_scope_org_id
+        loki_scope_org_id: loki_scope_org_id,
+        basic_auth_user: basic_auth_user,
+        basic_auth_password: basic_auth_password
     }
   end
 
@@ -135,7 +143,7 @@ defmodule LokiLogger do
     %{state | buffer: buffer, buffer_size: buffer_size + 1}
   end
 
-  defp async_io(loki_host, loki_labels, loki_scope_org_id, output) do
+  defp async_io(loki_host, loki_labels, loki_scope_org_id, output, state) do
     bin_push_request = generate_bin_push_request(loki_labels, output)
 
     http_headers = [
@@ -143,8 +151,23 @@ defmodule LokiLogger do
       {"X-Scope-OrgID", loki_scope_org_id}
     ]
 
+    basic_auth =
+      case not is_nil(state.basic_auth_user) and not is_nil(state.basic_auth_password) do
+        true -> %{user: state.basic_auth_user, password: state.basic_auth_password}
+        false -> nil
+      end
+
+    opts =
+      case basic_auth do
+        %{user: user, password: password} ->
+          [hackney: [basic_auth: {user, password}]]
+
+        _ ->
+          []
+      end
+
     # TODO: replace with async http call
-    case HTTPoison.post("#{loki_host}/api/prom/push", bin_push_request, http_headers) do
+    case HTTPoison.post("#{loki_host}/api/prom/push", bin_push_request, http_headers, opts) do
       {:ok, %HTTPoison.Response{status_code: 204}} ->
         # expected
         :noop
@@ -235,7 +258,7 @@ defmodule LokiLogger do
            buffer: buffer
          } = state
        ) do
-    async_io(loki_host, loki_labels, loki_scope_org_id, buffer)
+    async_io(loki_host, loki_labels, loki_scope_org_id, buffer, state)
     %{state | buffer: [], buffer_size: 0}
   end
 
