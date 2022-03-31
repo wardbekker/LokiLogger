@@ -10,6 +10,7 @@ defmodule LokiLogger do
             metadata: nil,
             loki_labels: nil,
             loki_host: nil,
+            loki_path: nil,
             loki_scope_org_id: nil
 
   def init(LokiLogger) do
@@ -91,6 +92,7 @@ defmodule LokiLogger do
     max_buffer = Keyword.get(config, :max_buffer, 32)
     loki_labels = Keyword.get(config, :loki_labels, %{application: "loki_logger_library"})
     loki_host = Keyword.get(config, :loki_host, "http://localhost:3100")
+    loki_path = Keyword.get(config, :loki_path, "/api/prom/push")
     loki_scope_org_id = Keyword.get(config, :loki_scope_org_id, "fake")
 
     %{
@@ -101,6 +103,7 @@ defmodule LokiLogger do
         max_buffer: max_buffer,
         loki_labels: loki_labels,
         loki_host: loki_host,
+        loki_path: loki_path,
         loki_scope_org_id: loki_scope_org_id
     }
   end
@@ -135,7 +138,7 @@ defmodule LokiLogger do
     %{state | buffer: buffer, buffer_size: buffer_size + 1}
   end
 
-  defp async_io(loki_host, loki_labels, loki_scope_org_id, output) do
+  defp async_io(loki_host, loki_path, loki_labels, loki_scope_org_id, output) do
     bin_push_request = generate_bin_push_request(loki_labels, output)
 
     http_headers = [
@@ -144,7 +147,7 @@ defmodule LokiLogger do
     ]
 
     # TODO: replace with async http call
-    case HTTPoison.post("#{loki_host}/api/prom/push", bin_push_request, http_headers) do
+    case HTTPoison.post("#{loki_host}#{loki_path}", bin_push_request, http_headers) do
       {:ok, %HTTPoison.Response{status_code: 204}} ->
         # expected
         :noop
@@ -230,12 +233,13 @@ defmodule LokiLogger do
   defp log_buffer(
          %{
            loki_host: loki_host,
+           loki_path: loki_path,
            loki_labels: loki_labels,
            loki_scope_org_id: loki_scope_org_id,
            buffer: buffer
          } = state
        ) do
-    async_io(loki_host, loki_labels, loki_scope_org_id, buffer)
+    async_io(loki_host, loki_path, loki_labels, loki_scope_org_id, buffer)
     %{state | buffer: [], buffer_size: 0}
   end
 
